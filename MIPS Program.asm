@@ -13,7 +13,7 @@ main:
 				 #t2 - loop counter
 				 #s0 - holds the decimal value
 				 #s1 - holds length of string
-				 $t3 - holds integer 9
+				 #t3 - holds integer 9
 
 				 #get hexadecimal value
 				 la $a0, prompt               #address of string to print 
@@ -21,13 +21,10 @@ main:
 				 syscall
 
 				 li $v0, 8                    #system call code for reading string = 8
-				 la $a0, buffer
 				 la $a0, buffer               #load byte space into address
 				 li $a1, 4                	  #allot the byte space for hexadecimal
-				 move $t0, $a0					 		  #move hexadecimal into $t0 register
 				 syscall
 	
-				 la $a0, $t0              		#load address of hexadecimal
 				 jal STRLEN                   #call strlen procedure
 				 addi $a1, $a0, 0        			#move address of hexadecimal into $a1
 				 addi $s1, $t2, 0        			#move length of string into $s1
@@ -38,7 +35,7 @@ main:
   IF:   
          sub $t5, $s2, 1
          addi $s1, $zero, 0						#initialize decimal value to 0
-  			 li $s3, $t5              		#holds length of string - 1
+  			 addu $s3, $s3, $t5              		#holds length of string - 1
   			 li $t2, 1										#loop counter
   			 li $s4 '0'              		  #holds character '0'
   			 li $s5, '9' 									#holds character '9'
@@ -145,7 +142,7 @@ main:
           syscall
 
           la $a0, buffer               #reload byte space to primary address
-          move $a0, $t0                #primary address = t1 address (load pointer)
+          move $a0, $a1                #primary address = t1 address (load pointer)
           li $v0, 4                    #system call code for printing string = 4
           syscall
         
