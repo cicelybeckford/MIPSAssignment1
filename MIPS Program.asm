@@ -5,14 +5,14 @@
 				 output1: .asciiz "The Decimal Value of " 
 				 output2: .asciiz " is " 
 				 invalid: .asciiz "Invalid Hexadecimal Number\n"
-				 buffer: .space 4
+				 buffer: .space 32
 
 .text
 main:
 				 #t0 - holds user input (hexadecimal)
 				 #t2 - loop counter
-				 #s0 - holds the decimal value
-				 #s1 - holds length of string
+				 #s1 - holds the decimal value
+				 #s3 - holds length of string
 				 #t3 - holds integer 9
 
 				 #get hexadecimal value
@@ -22,20 +22,18 @@ main:
 
 				 li $v0, 8                    #system call code for reading string = 8
 				 la $a0, buffer               #load byte space into address
-				 li $a1, 4                	  #allot the byte space for hexadecimal
+				 li $a1, 32                	  #allot the byte space for hexadecimal
 				 syscall
 	
 				 jal STRLEN                   #call strlen procedure
 				 addi $a1, $a0, 0        			#move address of hexadecimal into $a1
-				 addi $s1, $t2, 0        			#move length of string into $s1
+  			 addi $s3, $t2, -1            #store length of string in s3 register
 				 addi $t3, $zero, 8      			#initialize $t3 to 8
-				 ble $s1, $t3, IF         		#if string length less than or equal to 8 branch to IF
-				 bgt $s1, $t3, ELSE       		#if string length greater than 8 branch to ELSE
+				 ble $s3, $t3, IF         		#if string length less than or equal to 8 branch to IF
+				 bgt $s3, $t3, ELSE       		#if string length greater than 8 branch to ELSE
         
   IF:   
-         sub $t5, $s2, 1
-         addi $s1, $zero, 0						#initialize decimal value to 0
-  			 addu $s3, $s3, $t5              		#holds length of string - 1
+         li $s1, 0						       #initialize decimal value to 0
   			 li $t2, 1										#loop counter
   			 li $s4 '0'              		  #holds character '0'
   			 li $s5, '9' 									#holds character '9'
@@ -45,8 +43,8 @@ main:
   			 li $t5, 'F'						    	#holds character 'F'
   			 
   FORLOOP:
-            beq $t2, $s3, PRINT       #if counter equals string length - 1 end loop
-            lb $t3, 0($a1)            #load the next character into t3
+            beq $t2, $s3, PRINT       #if counter equals string length end loop
+            lb $t3, ($a1)             #load the next character into t3
             bge $t3, $s4, AND         #if the character is greater than 0
   AND:      ble $t3, $s5, THEN        # and less than 9 branch to LABEL1
   THEN:			jal LABEL1
@@ -126,10 +124,10 @@ main:
 	STRLEN: 
 					li $t2, 0			               #initialize count to 0
 	WHILELOOP:   
-					    lb $t4, 0($a0)           #load the next character into t4
+					    lb $t4, ($a0)           #load the next character into t4
 							beq $t4, $zero, EXIT     #exit loop if character is null
 							addi $a0, $a0, 1         #increment the string pointer
-							addi $t2, $t0, 1         #increment the count
+							addi $t2, $t2, 1         #increment the count
 						  j WHILELOOP              #return to the top of the loop
 						  
 	EXIT:
@@ -142,7 +140,7 @@ main:
           syscall
 
           la $a0, buffer               #reload byte space to primary address
-          move $a0, $a1                #primary address = t1 address (load pointer)
+          addi $a0, $a1, 0             #primary address = t1 address (load pointer)
           li $v0, 4                    #system call code for printing string = 4
           syscall
         
