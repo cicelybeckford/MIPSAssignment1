@@ -5,7 +5,7 @@
 				 output1: .asciiz "Hexadecimal: " 
 				 output2: .asciiz "Decimal: " 
 				 invalid: .asciiz "Invalid Hexadecimal Number\n"
-				 buffer: .space 64
+				 buffer: .space 9
 
 .text
 main:
@@ -22,7 +22,7 @@ main:
 
 				 li $v0, 8                    #system call code for reading string = 8
 				 la $a0, buffer               #load byte space into address
-				 li $a1, 32                	  #allot the byte space for hexadecimal
+				 li $a1, 9                	  #allot the byte space for hexadecimal
 				 syscall
 	
          addi $a1, $a0, 0        		  #move address of hexadecimal into $a1
@@ -32,8 +32,7 @@ main:
 				 ble $s3, $s0, IF         		#if string length less than or equal to 8 branch to IF
 				 bgt $s3, $s0, ELSE       		#if string length greater than 8 branch to ELSE
         
-  IF:   
-         li $s1, 0						        #initialize decimal value to 0
+  IF:    li $s1, 0						        #initialize decimal value to 0
   			 li $t2, 1										#loop counter
   			 li $s4 '0'              		  #holds character '0'
   			 li $s5, '9' 									#holds character '9'
@@ -42,8 +41,7 @@ main:
   			 li $t4, 'A'						    	#holds character 'A'
   			 li $t5, 'F'						    	#holds character 'F'			 
   
-  FORLOOP:
-            lb $t3, ($a1)             #load the next character into t3
+  FORLOOP:  lb $t3, ($a1)             #load the next character into t3
             
             ble $t3, $s5, AND         #if the character is less than or equal to 9
             ble $t3, $t5, AND2        #if the character is less than or equal to 'F'
@@ -71,8 +69,7 @@ main:
   
   
   
-  LABEL1:   
- 						sub $t1, $t3, $s4          #get the int value of the character
+  LABEL1:   sub $t1, $t3, $s4          #get the int value of the character
  						sub $t6, $s3, $t2          #(userInput.length()- counter)
             li $t7, 1									 #loop counter 
  						li $t8, 16                 #base 16
@@ -89,11 +86,9 @@ main:
            j NONZERO
  ZERO:     addu $v1, $t1, $zero
  NONZERO:  addu $s1, $s1, $v1
-           j EXIT
-            
+           j EXIT   
  
- LABEL2:   
- 						sub $t1, $t3, $t4          #get the int value of the character
+ LABEL2:    sub $t1, $t3, $t4          #get the int value of the character
  						addi $t1, $t1, 10
  						sub $t6, $s3, $t2         #(userInput.length()- counter)
             li $t7, 1									 #loop counter 
@@ -112,9 +107,8 @@ main:
  ZERO2:     addu $v1, $t1, $zero
  NONZERO2:  addu $s1, $s1, $v1
             j EXIT
-            
-  LABEL3:   
- 						sub $t1, $t3, $s6          #get the int value of the character
+             
+  LABEL3:   sub $t1, $t3, $s6          #get the int value of the character
  						addi $t1, $t1, 10
  						sub $t6, $s3, $t2          #(userInput.length()- counter)
             li $t7, 1									 #loop counter 
@@ -133,29 +127,37 @@ main:
  ZERO3:     addu $v1, $t1, $zero
  NONZERO3:  addu $s1, $s1, $v1
             j EXIT
- 		
+		
  	
-	ELSE:  
-	       la $a0, invalid               #address of string to print
+	ELSE:  la $a0, invalid               #address of string to print
          li $v0, 4								     #system call code for printing string = 4
          syscall 
          j END     
 	
-	STRLEN: 
-					li $t2, 0			               #initialize count to 0
-	WHILELOOP:   
-					    lb $t4, ($a0)           #load the next character into t4
+	STRLEN:     li $t2, 0			               #initialize count to 0
+	WHILELOOP:  lb $t4, ($a0)           #load the next character into t4
 							beq $t4, $zero, EXIT     #exit loop if character is null
 							addi $a0, $a0, 1         #increment the string pointer
 							addi $t2, $t2, 1         #increment the count
 						  j WHILELOOP              #return to the top of the loop
 						  
-	EXIT:
-	        jr $ra
-	
-	
-	PRINT:  
-					la $a0, output1              #address of string to print
+	EXIT:   jr $ra
+
+	LESS:   li $t0, 100000
+          divu $s1, $t0
+          mflo $s1
+          mfhi $v1
+        
+          move $a0, $s1                #primary address = s1 address (load pointer)
+          li $v0, 1                    #system call code for printing integer = 1
+          syscall
+            
+          move $a0, $v1                #primary address = v1 address (load pointer)
+          li $v0, 1                    #system call code for printing integer = 1
+          syscall
+          j END
+
+	PRINT:  la $a0, output1              #address of string to print
           li $v0, 4								     #system call code for printing string = 4
           syscall
 
@@ -169,12 +171,11 @@ main:
           li $v0, 4								     #system call code for printing string = 4
           syscall
 	
-				  la $a0, buffer               #reload byte space to primary address
+          blt $s1, $zero, LESS
           move $a0, $s1                #primary address = s1 address (load pointer)
           li $v0, 1                    #system call code for printing integer = 1
           syscall
  
- END:
-          li $v0, 10                   # terminate program run and
+ END:     li $v0, 10                   # terminate program run and
           syscall                      # Exit 
 
