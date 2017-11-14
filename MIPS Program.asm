@@ -1,11 +1,11 @@
 #PROGRAM: CONVERT HEXADECIMAL TO DECIMAL
 
 .data
-				 prompt: .asciiz "Enter a Hexadecimal Value: \n"
-				 output1: .asciiz "The Decimal Value of " 
-				 output2: .asciiz " is " 
+				 prompt: .asciiz "Enter a Hexadecimal Value: "
+				 output1: .asciiz "Hexadecimal: " 
+				 output2: .asciiz "Decimal: " 
 				 invalid: .asciiz "Invalid Hexadecimal Number\n"
-				 buffer: .space 32
+				 buffer: .space 64
 
 .text
 main:
@@ -43,17 +43,16 @@ main:
   			 li $t5, 'F'						    	#holds character 'F'			 
   
   FORLOOP:
-            bgt $t2, $s3, PRINT       #if counter greater than string length end loop
             lb $t3, ($a1)             #load the next character into t3
-            bge $t3, $s4, AND         #if the character is greater than 0
-  AND:      ble $t3, $s5, THEN        # and less than 9 branch to LABEL1
-  
-            bge $t3, $s6, AND2        #if the character is greater than 'a'
-  AND2:			ble $t3, $s7, THEN2       #and less than 'f' 
-   
-  					bge $t3, $t4, AND3        #if the character is greater than 'A'
-  AND3:     ble $t3, $t5, THEN3       #and less than 'F' branch to LABEL3
-  
+            
+            ble $t3, $s5, AND         #if the character is less than or equal to 9
+            ble $t3, $t5, AND2        #if the character is less than or equal to 'F'
+            ble $t3, $s7, AND3        #if the character is less than or equal to 'f'
+            j ELSE
+            
+  AND:      bge $t3, $s4, THEN        #and greater than or equal to 9 branch to LABEL1
+  AND2:			bge $t3, $t4, THEN2       #and greater than or equal to 'A' branch to LABEL2
+  AND3:     bge $t3, $s6, THEN3       #and greater than or equal to 'a' branch to LABEL3
             j ELSE                    #jump to ELSE
             
   THEN:			jal LABEL1                #jump to LABEL1
@@ -65,7 +64,8 @@ main:
   THEN3: 		jal LABEL3                #jump to LABEL3
   					j JUMP                    #jump to bottom of loop
   
-  JUMP:     addi $a1, $a1, 1          #increment the string pointer
+  JUMP:     beq $t2, $s3, PRINT       #if counter equals string length end loop
+            addi $a1, $a1, 1          #increment the string pointer
             addi $t2, $t2, 1          #increment counter
             j FORLOOP                 #jump to the beginning of the loop
   
@@ -78,18 +78,18 @@ main:
  						li $t8, 16                 #base 16
  						li $v0, 16
             
-            beq $t7, $zero, ZERO
+            beq $t6, $zero, ZERO
  	LOOP:     beq $t7, $t6, DECIMAL      #if counter equals (userInput.length()- counter) end loop
  	          multu $v0, $t8             #16 *= 16
             mflo $v0 									 #store results in $v0 register
             addi $t7, $t7, 1           #increment counter
             j LOOP
- DECIMAL:   mult $t1, $v0
-            j NONZERO
- ZERO:      mult $t1, $t7
- NONZERO:   mflo $v1
-            addu $s1, $s1, $v1
-            j EXIT
+ DECIMAL:  multu $t1, $v0
+           mflo $v1
+           j NONZERO
+ ZERO:     addu $v1, $t1, $zero
+ NONZERO:  addu $s1, $s1, $v1
+           j EXIT
             
  
  LABEL2:   
@@ -100,45 +100,46 @@ main:
  						li $t8, 16                 #base 16
  						li $v0, 16
 
-            beq $t7, $zero, ZERO2
+            beq $t6, $zero, ZERO2
  	LOOP2:    beq $t7, $t6, DECIMAL2     #if counter equals (userInput.length()- counter) end loop
  	          multu $v0, $t8             #16 *= 16
             mflo $v0 									 #store results in $v0 register
             addi $t7, $t7, 1           #increment counter
             j LOOP2
- DECIMAL2:  mult $t1, $v0
+ DECIMAL2:  multu $t1, $v0
+            mflo $v1
             j NONZERO2
- ZERO2:     mult $t1, $t7
- NONZERO2:  mflo $v1
-            addu $s1, $s1, $v1
+ ZERO2:     addu $v1, $t1, $zero
+ NONZERO2:  addu $s1, $s1, $v1
             j EXIT
             
   LABEL3:   
  						sub $t1, $t3, $s6          #get the int value of the character
  						addi $t1, $t1, 10
- 						sub $t6, $s3, $t2         #(userInput.length()- counter)
+ 						sub $t6, $s3, $t2          #(userInput.length()- counter)
             li $t7, 1									 #loop counter 
  						li $t8, 16                 #base 16
  						li $v0, 16
   
-            beq $t7, $zero, ZERO3
+            beq $t6, $zero, ZERO3
  	LOOP3:    beq $t7, $t6, DECIMAL3     #if counter equals (userInput.length()- counter) end loop
  	          multu $v0, $t8             #16 *= 16
             mflo $v0 									 #store results in $v0 register
             addi $t7, $t7, 1           #increment counter
             j LOOP3
- DECIMAL3:  mult $t1, $v0
+ DECIMAL3:  multu $t1, $v0
+            mflo $v1
             j NONZERO3
- ZERO3:     mult $t1, $t7
- NONZERO3:  mflo $v1
-            addu $s1, $s1, $v1
+ ZERO3:     addu $v1, $t1, $zero
+ NONZERO3:  addu $s1, $s1, $v1
             j EXIT
  		
  	
 	ELSE:  
 	       la $a0, invalid               #address of string to print
          li $v0, 4								     #system call code for printing string = 4
-         syscall      
+         syscall 
+         j END     
 	
 	STRLEN: 
 					li $t2, 0			               #initialize count to 0
@@ -172,4 +173,8 @@ main:
           move $a0, $s1                #primary address = s1 address (load pointer)
           li $v0, 1                    #system call code for printing integer = 1
           syscall
+ 
+ END:
+          li $v0, 10                   # terminate program run and
+          syscall                      # Exit 
 
